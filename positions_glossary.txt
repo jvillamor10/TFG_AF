@@ -1,0 +1,28 @@
+Offensive positions
+QB: Quarterback
+WR: Wide receiver
+RB: Running back
+TE: Tight end
+FB: Fullback
+HB: Halfback
+
+Defensive positions
+SS: Strong safety
+FS: Free safety
+MLB: Middle linebacker
+CB: Cornerback
+LB: Linebacker
+OLB: Outside linebacker
+ILB: Inside linebacker
+DL: Defensive line
+DB: Defensive back
+NT: Nose tackle
+S: Safety
+DT: Defensive tackle
+
+Special teams positions
+P: Punter
+LS: Long snapper
+K: Kicker
+
+number_players = week1_only_defense.groupby(["gameId","playId"])
