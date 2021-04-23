@@ -24,5 +24,3 @@ Special teams positions
 P: Punter
 LS: Long snapper
 K: Kicker
-
-number_players = week1_only_defense.groupby(["gameId","playId"])
