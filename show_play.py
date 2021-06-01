@@ -136,6 +136,8 @@ if len(sys.argv) == 1:
     print("Not enough args")
     sys.exit(0)
     
+PLAYS_ROUTE = "processed_data/remove_st_nbt_spikes/plays.csv"
+WEEKS_ROUTE = "processed_data/remove_st_nbt_spikes/week@.csv"
 
 show_offense = False
 show_defense = False
@@ -145,10 +147,10 @@ playId = sys.argv[1]
 idParts = playId.split(":")
 week = idParts[2]
 
-play = pd.read_csv("processed_data/new_id/weeks/week{}_ordered.csv".format(week))
+play = pd.read_csv(WEEKS_ROUTE.replace("@",week))
 play = play[play["id"]==playId]
 
-play_info = pd.read_csv("processed_data/new_id/plays_new_id.csv")
+play_info = pd.read_csv(PLAYS_ROUTE)
 play_info = play_info[play_info["id"]==playId]
 
 if len(sys.argv) > 2:
@@ -172,6 +174,7 @@ if show_defense:
         if row["position"] in ['SS','FS','MLB','CB','LB','OLB','ILB','DL','DB','NT','S','DT']:
             print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
     print()
+    
 ventana = Tk()
 
 ventana.geometry("1200x580")
