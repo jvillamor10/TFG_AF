@@ -96,15 +96,6 @@ def paint_player(canvas,x,y,pos,o):
     canvas.create_oval(x0,y0,x1,y1,fill=colour)
     
     #canvas.create_line(x,y,x+math.sin(o),y+math.cos(o),arrow=LAST)
-    
-def advance_play():
-    canvas.delete("all")
-    paint_gridiron(canvas)
-    global frameId
-    frameId+=1
-    frame = play[play["frameId"]==frameId]
-    print_frame(canvas,frame)
-    return
 
 def print_frame(canvas,frame):
     for index,row in frame.iterrows():
@@ -120,6 +111,17 @@ def print_frame(canvas,frame):
             paint_football(canvas,int(row["x"])*10,530-int(row["y"])*10)
     
     print_lines(canvas)
+    
+def advance_play():
+    canvas.delete("all")
+    paint_gridiron(canvas)
+    global frameId
+    global play
+    frameId+=1
+    frame = play[play["frameId"]==frameId]
+    print_frame(canvas,frame)
+    return
+
 
 def back_play():
     canvas.delete("all")
@@ -130,6 +132,73 @@ def back_play():
     print_frame(canvas,frame)
     return
 
+
+def previous_play():
+    global actualPlay
+    global number_plays
+    global play_info
+    global play
+    
+    if actualPlay == number_plays - 1:
+        next_play_button["state"] = NORMAL
+        
+    actualPlay-=1
+    if actualPlay == 0:
+        previous_play_button["state"] = DISABLED
+    
+    canvas.delete("all")
+    paint_gridiron(canvas)
+    global frameId
+    frameId = 1
+    
+    actualPlayId = plays[actualPlay]
+    
+    idParts = actualPlayId.split(":")
+    week = idParts[2]
+    
+    play = pd.read_csv(WEEKS_ROUTE.replace("@",week))
+    play = play[play["id"]==actualPlayId]
+    
+    play_info = pd.read_csv(PLAYS_ROUTE)
+    play_info = play_info[play_info["id"]==actualPlayId]
+    
+    frame = play[play["frameId"]==frameId]
+    print_frame(canvas,frame)
+    return
+    
+def next_play():
+    global actualPlay
+    global number_plays
+    global play_info
+    global play
+    
+    if actualPlay == 0:
+        previous_play_button["state"] = NORMAL
+        
+    actualPlay+=1
+    if actualPlay == number_plays -1:
+        next_play_button["state"] = DISABLED
+    
+    canvas.delete("all")
+    paint_gridiron(canvas)
+    global frameId
+    frameId = 1
+    
+    actualPlayId = plays[actualPlay]
+    
+    idParts = actualPlayId.split(":")
+    week = idParts[2]
+    
+    play = pd.read_csv(WEEKS_ROUTE.replace("@",week))
+    play = play[play["id"]==actualPlayId]
+    
+    play_info = pd.read_csv(PLAYS_ROUTE)
+    play_info = play_info[play_info["id"]==actualPlayId]
+    
+    frame = play[play["frameId"]==frameId]
+    print_frame(canvas,frame)
+    return
+    
 ####################################
 
 if len(sys.argv) == 1:
@@ -143,15 +212,21 @@ show_offense = False
 show_defense = False
 
 frameId = 1
-playId = sys.argv[1]
-idParts = playId.split(":")
+plays = sys.argv[1].split(",")
+number_plays = len(plays)
+
+actualPlay = 0
+actualPlayId = plays[actualPlay]
+
+
+idParts = actualPlayId.split(":")
 week = idParts[2]
 
 play = pd.read_csv(WEEKS_ROUTE.replace("@",week))
-play = play[play["id"]==playId]
+play = play[play["id"]==actualPlayId]
 
 play_info = pd.read_csv(PLAYS_ROUTE)
-play_info = play_info[play_info["id"]==playId]
+play_info = play_info[play_info["id"]==actualPlayId]
 
 if len(sys.argv) > 2:
     if "o" in sys.argv[2]:
@@ -177,7 +252,7 @@ if show_defense:
     
 ventana = Tk()
 
-ventana.geometry("1200x580")
+ventana.geometry("1200x640")
 
 ventana .configure(bg="green")
 
@@ -191,6 +266,15 @@ back_button.place(x=0,y=540)
 
 advance_button = Button(ventana,text="Advance",command=advance_play)
 advance_button.place(x=70,y=540)
+
+previous_play_button = Button(ventana,text="Previous play",command=previous_play)
+previous_play_button.place(x=0,y=580)
+previous_play_button["state"] = DISABLED
+
+next_play_button = Button(ventana,text="Next play", command=next_play)
+next_play_button.place(x=140,y=580)
+if number_plays == 1:
+    next_play_button["state"] = DISABLED
 
 canvas.pack(expand=YES, fill=BOTH)
 #canvas.bind('<Button-1>',clean_play)
