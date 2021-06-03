@@ -5,6 +5,7 @@ import pandas as pd
 import time
 import math
 import sys
+import pickle
 
 # show_play.py play (only one argument)
 
@@ -164,6 +165,8 @@ def previous_play():
     
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
+    print("Estas viendo la jugada: ",actualPlayId)
+    print_players_console()
     return
     
 def next_play():
@@ -197,22 +200,59 @@ def next_play():
     
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
+    print("Estas viendo la jugada: ",actualPlayId)
+    print_players_console()
     return
     
+def print_players_console():
+    global show_defense
+    global show_offense
+    
+    if show_offense:
+        frame1 = play[play["frameId"]==1]
+        print("OFFENSE TEAM")
+        for index,row in frame1.iterrows():
+            if row["position"] in ['QB', 'WR', 'RB', 'TE', 'FB', 'HB', 'P', 'LS', 'K']:
+                print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
+        print()
+    
+    if show_defense:
+        frame1 = play[play["frameId"]==1]
+        print("DEFENSE TEAM")
+        for index,row in frame1.iterrows():
+            if row["position"] in ['SS','FS','MLB','CB','LB','OLB','ILB','DL','DB','NT','S','DT']:
+                print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
+        print()
 ####################################
 
-if len(sys.argv) == 1:
-    print("Not enough args")
-    sys.exit(0)
-    
 PLAYS_ROUTE = "processed_data/remove_st_nbt_spikes/plays.csv"
 WEEKS_ROUTE = "processed_data/remove_st_nbt_spikes/week@.csv"
 
+
+if len(sys.argv) == 1:
+    play_info = pd.read_csv(PLAYS_ROUTE)
+    unique_plays = play_info["id"].unique()
+    for play in unique_plays:
+        print(play)
+    sys.exit(0)
+    
 show_offense = False
 show_defense = False
 
 frameId = 1
-plays = sys.argv[1].split(",")
+
+if sys.argv[1][len(sys.argv[1])-7:len(sys.argv[1])-1]:
+    pickle_file = open(sys.argv[1],'rb')
+    plays = pickle.load(pickle_file)
+    print("Se han añadido ",len(plays)," jugadas.")
+    print("Insertadas las jugadas:")
+    cont = 0
+    for play in plays:
+        print("\t",cont,".- ",play)
+        cont+=1
+else:
+    plays = sys.argv[1].split(",")
+    
 number_plays = len(plays)
 
 actualPlay = 0
@@ -225,6 +265,8 @@ week = idParts[2]
 play = pd.read_csv(WEEKS_ROUTE.replace("@",week))
 play = play[play["id"]==actualPlayId]
 
+print("Estas viendo la jugada: ",actualPlayId)
+
 play_info = pd.read_csv(PLAYS_ROUTE)
 play_info = play_info[play_info["id"]==actualPlayId]
 
@@ -234,21 +276,7 @@ if len(sys.argv) > 2:
     if "d" in sys.argv[2]:
         show_defense = True
 
-if show_offense:
-    frame1 = play[play["frameId"]==1]
-    print("OFFENSE TEAM")
-    for index,row in frame1.iterrows():
-        if row["position"] in ['QB', 'WR', 'RB', 'TE', 'FB', 'HB', 'P', 'LS', 'K']:
-            print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
-    print()
-    
-if show_defense:
-    frame1 = play[play["frameId"]==1]
-    print("DEFENSE TEAM")
-    for index,row in frame1.iterrows():
-        if row["position"] in ['SS','FS','MLB','CB','LB','OLB','ILB','DL','DB','NT','S','DT']:
-            print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
-    print()
+print_players_console()
     
 ventana = Tk()
 
