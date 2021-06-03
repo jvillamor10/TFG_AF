@@ -165,8 +165,12 @@ def previous_play():
     
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
-    print("Estas viendo la jugada: ",actualPlayId)
-    print_players_console()
+    print("Estas viendo la jugada: "+str(actualPlayId)+" ("+str(actualPlay)+")")
+    
+    if str(play_info["penaltyCodes"].values[0]) != "nan":
+        print("Jugada con PENALTY")
+    
+    print_additional_info_console()
     return
     
 def next_play():
@@ -198,15 +202,23 @@ def next_play():
     play_info = pd.read_csv(PLAYS_ROUTE)
     play_info = play_info[play_info["id"]==actualPlayId]
     
+    
+    
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
-    print("Estas viendo la jugada: ",actualPlayId)
-    print_players_console()
+    print("Estas viendo la jugada: "+str(actualPlayId)+" ("+str(actualPlay)+")")
+    
+    if str(play_info["penaltyCodes"].values[0]) != "nan":
+        print("Jugada con PENALTY")
+        
+    print_additional_info_console()
     return
     
-def print_players_console():
+def print_additional_info_console():
     global show_defense
     global show_offense
+    global show_description
+    global show_info
     
     if show_offense:
         frame1 = play[play["frameId"]==1]
@@ -223,6 +235,22 @@ def print_players_console():
             if row["position"] in ['SS','FS','MLB','CB','LB','OLB','ILB','DL','DB','NT','S','DT']:
                 print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
         print()
+    
+    if show_description:
+        print(play_info["playDescription"].values[0])
+        print()
+    
+    if show_info:
+        print("Quarter: "+str(play_info["quarter"].values[0]))
+        print("Down: "+str(play_info["down"].values[0]))
+        print("Possesion Team: "+str(play_info["possessionTeam"].values[0]))
+        print("Yard line side: "+str(play_info["yardlineSide"].values[0]))
+        print("Visitor score: "+str(play_info["preSnapVisitorScore"].values[0]))
+        print("Local score: "+str(play_info["preSnapHomeScore"].values[0]))
+        print("Pass result: "+str(play_info["passResult"].values[0]))
+        print("Offense pass result: "+str(play_info["offensePlayResult"].values[0]))
+        print()
+        
 ####################################
 
 PLAYS_ROUTE = "processed_data/remove_st_nbt_spikes/plays.csv"
@@ -238,6 +266,8 @@ if len(sys.argv) == 1:
     
 show_offense = False
 show_defense = False
+show_description = False
+show_info = False
 
 frameId = 1
 
@@ -265,7 +295,7 @@ week = idParts[2]
 play = pd.read_csv(WEEKS_ROUTE.replace("@",week))
 play = play[play["id"]==actualPlayId]
 
-print("Estas viendo la jugada: ",actualPlayId)
+print("Estas viendo la jugada: "+str(actualPlayId)+" ("+str(actualPlay)+")")
 
 play_info = pd.read_csv(PLAYS_ROUTE)
 play_info = play_info[play_info["id"]==actualPlayId]
@@ -275,8 +305,14 @@ if len(sys.argv) > 2:
         show_offense = True
     if "d" in sys.argv[2]:
         show_defense = True
+    if "D" in sys.argv[2]:
+        show_description = True
+    if "i" in sys.argv[2]:
+        show_info = True
+if str(play_info["penaltyCodes"].values[0]) != "nan":
+        print("Jugada con PENALTY")
 
-print_players_console()
+print_additional_info_console()
     
 ventana = Tk()
 
