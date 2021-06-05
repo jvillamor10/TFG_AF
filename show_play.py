@@ -32,8 +32,8 @@ def paint_gridiron(canvas):
             else:
                 w=5
                 d=8
-            canvas.create_line(i-d,197,i+d,197,fill="white",width=w)
-            canvas.create_line(i-d,333,i+d,333,fill="white",width=w)
+            canvas.create_line(i-d,236,i+d,236,fill="white",width=w)
+            canvas.create_line(i-d,297,i+d,297,fill="white",width=w)
 
     count = 1
     other_side = False
@@ -53,8 +53,8 @@ def paint_gridiron(canvas):
             other_side = True
     
     for i in range(100,1100,10):
-        canvas.create_line(i,197,i,202,fill="white",width=1)
-        canvas.create_line(i,327,i,333,fill="white",width=1)
+        canvas.create_line(i,236,i,241,fill="white",width=1)
+        canvas.create_line(i,292,i,297,fill="white",width=1)
         
     
 
