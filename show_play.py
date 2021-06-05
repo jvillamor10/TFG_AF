@@ -90,9 +90,9 @@ def paint_player(canvas,x,y,pos,o):
     y0 = y - 6
     x1 = x + 6
     y1 = y + 6
-    if pos == "offense":
+    if pos == "away":
         colour = "blue"
-    elif pos == "defense":
+    elif pos == "home":
         colour = "red"
     canvas.create_oval(x0,y0,x1,y1,fill=colour)
     
@@ -100,12 +100,12 @@ def paint_player(canvas,x,y,pos,o):
 
 def print_frame(canvas,frame):
     for index,row in frame.iterrows():
-        if row["position"] in ['QB', 'WR', 'RB', 'TE', 'FB', 'HB', 'P', 'LS', 'K']:
-            pos = "offense"
+        if row["team"] == "home":
+            pos = "home"
             paint_player(canvas,int(row["x"])*10,530-int(row["y"])*10,pos,row["o"])
             canvas.create_text(int(row["x"])*10,530-int(row["y"])*10,font=("Purisa",5),fill="white",text=int(row["jerseyNumber"]))
-        elif row["position"] in ['SS','FS','MLB','CB','LB','OLB','ILB','DL','DB','NT','S','DT']: 
-            pos = "defense"
+        elif row["team"] == "away": 
+            pos = "away"
             paint_player(canvas,int(row["x"])*10,530-int(row["y"])*10,pos,row["o"])
             canvas.create_text(int(row["x"])*10,530-int(row["y"])*10,font=("Purisa",5),fill="white",text=int(row["jerseyNumber"]))
         elif row["displayName"] == "Football":
@@ -219,20 +219,23 @@ def print_additional_info_console():
     global show_offense
     global show_description
     global show_info
+    global show_football
     
     if show_offense:
         frame1 = play[play["frameId"]==1]
         print("OFFENSE TEAM")
+        qb_team = frame1[frame1["position"]=='QB']["team"].values[0]
         for index,row in frame1.iterrows():
-            if row["position"] in ['QB', 'WR', 'RB', 'TE', 'FB', 'HB', 'P', 'LS', 'K']:
+            if row["team"] == qb_team and row["displayName"]!="Football":
                 print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
         print()
     
     if show_defense:
         frame1 = play[play["frameId"]==1]
         print("DEFENSE TEAM")
+        qb_team = frame1[frame1["position"]=='QB']["team"].values[0]
         for index,row in frame1.iterrows():
-            if row["position"] in ['SS','FS','MLB','CB','LB','OLB','ILB','DL','DB','NT','S','DT']:
+            if row["team"] != qb_team and row["displayName"]!="Football":
                 print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
         print()
     
@@ -241,6 +244,8 @@ def print_additional_info_console():
         print()
     
     if show_info:
+        print("PersonnelO: "+str(play_info["personnelO"].values[0]))
+        print("PersonnelD: "+str(play_info["personnelD"].values[0]))
         print("Quarter: "+str(play_info["quarter"].values[0]))
         print("Down: "+str(play_info["down"].values[0]))
         print("Possesion Team: "+str(play_info["possessionTeam"].values[0]))
@@ -250,6 +255,12 @@ def print_additional_info_console():
         print("Pass result: "+str(play_info["passResult"].values[0]))
         print("Offense pass result: "+str(play_info["offensePlayResult"].values[0]))
         print()
+    
+    if show_football:
+        football = play[(play["frameId"]==1)&(play["displayName"]=="Football")]
+        print("El balón está en las coordenadas: ")
+        print("X: "+str(football["x"].values[0]))
+        print("Y: "+str(football["y"].values[0]))
         
 ####################################
 
@@ -268,10 +279,11 @@ show_offense = False
 show_defense = False
 show_description = False
 show_info = False
+show_football = False
 
 frameId = 1
 
-if sys.argv[1][len(sys.argv[1])-7:len(sys.argv[1])-1]:
+if sys.argv[1][len(sys.argv[1])-7:len(sys.argv[1])] == '.pickle':
     pickle_file = open(sys.argv[1],'rb')
     plays = pickle.load(pickle_file)
     print("Se han añadido ",len(plays)," jugadas.")
@@ -287,7 +299,6 @@ number_plays = len(plays)
 
 actualPlay = 0
 actualPlayId = plays[actualPlay]
-
 
 idParts = actualPlayId.split(":")
 week = idParts[2]
@@ -309,6 +320,8 @@ if len(sys.argv) > 2:
         show_description = True
     if "i" in sys.argv[2]:
         show_info = True
+    if "f" in sys.argv[2]:
+        show_football = True
 if str(play_info["penaltyCodes"].values[0]) != "nan":
         print("Jugada con PENALTY")
 
