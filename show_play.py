@@ -264,8 +264,8 @@ def print_additional_info_console():
         
 ####################################
 
-PLAYS_ROUTE = "processed_data/remove_st_nbt_spikes_strangeplays/plays.csv"
-WEEKS_ROUTE = "processed_data/remove_st_nbt_spikes_strangeplays/week@.csv"
+PLAYS_ROUTE = "processed_data/clean/plays.csv"
+WEEKS_ROUTE = "processed_data/clean/week@.csv"
 
 
 if len(sys.argv) == 1:
