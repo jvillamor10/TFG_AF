@@ -1,6 +1,7 @@
 #!/bin/python3
 
 from tkinter import *
+from PIL import Image, ImageTk
 import pandas as pd
 import time
 import math
@@ -8,6 +9,28 @@ import sys
 import pickle
 
 # show_play.py play (only one argument)
+
+ventana = Tk()
+
+ventana.geometry("1200x640")
+
+ventana .configure(bg="green")
+
+ventana.title("GridIron")
+
+canvas = Canvas(width=1200,height=530,bg="green")
+
+images = []
+
+def create_rectangle(x1, y1, x2, y2, **kwargs):
+    if 'alpha' in kwargs:
+        alpha = int(kwargs.pop('alpha') * 255)
+        fill = kwargs.pop('fill')
+        fill = ventana.winfo_rgb(fill) + (alpha,)
+        image = Image.new('RGBA', (x2-x1, y2-y1), fill)
+        images.append(ImageTk.PhotoImage(image))
+        canvas.create_image(x1, y1, image=images[-1], anchor='nw')
+    canvas.create_rectangle(x1, y1, x2, y2, **kwargs)
 
 
 """       Functions            """
@@ -38,11 +61,22 @@ def paint_gridiron(canvas):
     count = 1
     other_side = False
     for i in range(110,1000,100):
-        canvas.create_text(i+80,510,fill="white",font=("Purisa",14),text=str(count))
-        canvas.create_text(i+100,510,fill="white",font=("Purisa",14),text="0")
+        canvas.create_text(i+80,413,fill="white",font=("Purisa",14),text=str(count))
+        canvas.create_text(i+100,413,fill="white",font=("Purisa",14),text="0")
         
-        canvas.create_text(i+80,20,fill="white",font=("Purisa",14),text="0",angle=180)
-        canvas.create_text(i+100,20,fill="white",font=("Purisa",14),text=str(count),angle=180)
+        if i <= 500:
+            points = [i+70,408,i+70,418,i+65,414]
+            canvas.create_polygon(points,fill="white")
+            points = [i+70,115,i+70,125,i+65,120]
+            canvas.create_polygon(points,fill="white")
+        elif i > 600:
+            points = [i+110,408,i+110,418,i+115,414]
+            canvas.create_polygon(points,fill="white")
+            points = [i+110,115,i+110,125,i+115,120]
+            canvas.create_polygon(points,fill="white")
+        
+        canvas.create_text(i+80,120,fill="white",font=("Purisa",14),text="0",angle=180)
+        canvas.create_text(i+100,120,fill="white",font=("Purisa",14),text=str(count),angle=180)
         
         if not other_side:
             count+=1
@@ -220,6 +254,7 @@ def print_additional_info_console():
     global show_description
     global show_info
     global show_football
+    global show_zones
     
     if show_offense:
         frame1 = play[play["frameId"]==1]
@@ -262,6 +297,38 @@ def print_additional_info_console():
         print("X: "+str(football["x"].values[0]))
         print("Y: "+str(football["y"].values[0]))
         
+    if show_zones:
+        
+        los = play_info["absoluteYardlineNumber"].values[0]
+        los = los * 10
+        playDirection = play["playDirection"].values[0]
+        if playDirection == "right":
+            deepzone = los + 150
+            #print deep zone
+            create_rectangle(int(deepzone), 0, int(deepzone)+200, 530, fill='yellow', alpha=.5)
+            #print hook zone
+            create_rectangle(int(los), 216,int(deepzone) , 317, fill='green', alpha=.5)
+            #print curl zone
+            create_rectangle(int(los), 120, int(deepzone), 216, fill='blue', alpha=.5)
+            create_rectangle(int(los), 317, int(deepzone), 413, fill='blue', alpha=.5)
+            #print flat zone
+            create_rectangle(int(los), 0, int(deepzone), 120, fill='red', alpha=.5)
+            create_rectangle(int(los), 413, int(deepzone), 533, fill='red', alpha=.5)
+        elif playDirection == "left":
+            deepzone = los - 150
+            #print deep zone
+            create_rectangle(int(deepzone)-200, 0, int(deepzone), 530, fill='yellow', alpha=.5)
+            #print hook zone
+            create_rectangle(int(deepzone), 216, int(los), 317, fill='green', alpha=.5)
+            #print curl zone
+            create_rectangle(int(deepzone), 120, int(los), 216, fill='blue', alpha=.5)
+            create_rectangle(int(deepzone), 317, int(los), 413, fill='blue', alpha=.5)
+            #print flat zone
+            create_rectangle(int(deepzone), 0, int(los), 120, fill='red', alpha=.5)
+            create_rectangle(int(deepzone), 413, int(los), 533, fill='red', alpha=.5)
+        
+        #los = plays_no_rz[plays_no_rz["id"]==id]["absoluteYardlineNumber"].values[0]
+        
 ####################################
 
 PLAYS_ROUTE = "processed_data/clean/plays.csv"
@@ -280,6 +347,7 @@ show_defense = False
 show_description = False
 show_info = False
 show_football = False
+show_zones = False
 
 frameId = 1
 
@@ -322,20 +390,16 @@ if len(sys.argv) > 2:
         show_info = True
     if "f" in sys.argv[2]:
         show_football = True
+    if "z" in sys.argv[2]:
+        show_zones = True
+        
 if str(play_info["penaltyCodes"].values[0]) != "nan":
         print("Jugada con PENALTY")
 
 print_additional_info_console()
     
-ventana = Tk()
 
-ventana.geometry("1200x640")
 
-ventana .configure(bg="green")
-
-ventana.title("GridIron")
-
-canvas = Canvas(width=1200,height=530,bg="green")
 
 back_button = Button(ventana,text="Back",command=back_play)
 back_button.place(x=0,y=540)
