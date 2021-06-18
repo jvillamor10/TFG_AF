@@ -24,6 +24,7 @@ Cada jugada tiene el siguiente ID: gameId:playId:week
 * DB: Defensive back
 * NT: Nose tackle
 * S: Safety
+* DE: Defensive end
 * DT: Defensive tackle
 
 ### Posiciones de equipos especiales

@@ -18,7 +18,7 @@ ventana .configure(bg="green")
 
 ventana.title("GridIron")
 
-canvas = Canvas(width=1200,height=530,bg="green")
+canvas = Canvas(width=1200,height=533,bg="green")
 
 images = []
 
@@ -31,22 +31,42 @@ def create_rectangle(x1, y1, x2, y2, **kwargs):
         images.append(ImageTk.PhotoImage(image))
         canvas.create_image(x1, y1, image=images[-1], anchor='nw')
     canvas.create_rectangle(x1, y1, x2, y2, **kwargs)
+    
+def create_polygon(*args, **kwargs):
+    if "alpha" in kwargs:         
+        if "fill" in kwargs:
+            # Get and process the input data
+            fill = root.winfo_rgb(kwargs.pop("fill"))\
+                   + (int(kwargs.pop("alpha") * 255),)
+            outline = kwargs.pop("outline") if "outline" in kwargs else None
+
+            # We need to find a rectangle the polygon is inscribed in
+            # (max(args[::2]), max(args[1::2])) are x and y of the bottom right point of this rectangle
+            # and they also are the width and height of it respectively (the image will be inserted into
+            # (0, 0) coords for simplicity)
+            image = Image.new("RGBA", (max(args[::2]), max(args[1::2])))
+            ImageDraw.Draw(image).polygon(args, fill=fill, outline=outline)
+
+            images.append(ImageTk.PhotoImage(image))  # prevent the Image from being garbage-collected
+            return canvas.create_image(0, 0, image=images[-1], anchor="nw")  # insert the Image to the 0, 0 coords
+        raise ValueError("fill color must be specified!")
+    canvas.create_polygon(*args, **kwargs)
 
 
 """       Functions            """
 
 def paint_gridiron(canvas):
-    canvas.create_rectangle(0,0,99,530,fill="blue")
-    canvas.create_rectangle(1101,0,1200,530,fill="red")
+    canvas.create_rectangle(0,0,99,533,fill="blue")
+    canvas.create_rectangle(1101,0,1200,533,fill="red")
 
 
     for i in range(100,1150,50):
         if i == 600:
-            canvas.create_line(i, 0, i, 530,width=6,fill="white")
+            canvas.create_line(i, 0, i, 533,width=6,fill="white")
         elif (i - 50) % 100 == 50:
-            canvas.create_line(i, 0, i, 530,width=3,fill="white")
+            canvas.create_line(i, 0, i, 533,width=3,fill="white")
         else:
-            canvas.create_line(i, 0, i, 530,width=1,fill="white")
+            canvas.create_line(i, 0, i, 533,width=1,fill="white")
         
         if i != 100 and i != 1100:
             if i != 600:
@@ -93,10 +113,10 @@ def paint_gridiron(canvas):
     
 
 def paint_los(canvas,x):
-    canvas.create_line(x,0,x,530,fill="blue",width=3)#,dash=(4,2))
+    canvas.create_line(x,0,x,533,fill="blue",width=3)#,dash=(4,2))
     
 def paint_first_down_line(canvas,yardsToGo,los,direction):
-    canvas.create_line(los+(yardsToGo*direction),0,los+(yardsToGo*direction),530,fill="yellow",width=3)
+    canvas.create_line(los+(yardsToGo*direction),0,los+(yardsToGo*direction),533,fill="yellow",width=3)
     
 def print_lines(canvas):
     #obtain direction
@@ -133,19 +153,23 @@ def paint_player(canvas,x,y,pos,o):
     #canvas.create_line(x,y,x+math.sin(o),y+math.cos(o),arrow=LAST)
 
 def print_frame(canvas,frame):
+    global show_zones
     for index,row in frame.iterrows():
         if row["team"] == "home":
             pos = "home"
-            paint_player(canvas,int(row["x"])*10,530-int(row["y"])*10,pos,row["o"])
-            canvas.create_text(int(row["x"])*10,530-int(row["y"])*10,font=("Purisa",5),fill="white",text=int(row["jerseyNumber"]))
+            paint_player(canvas,int(row["x"])*10,533-int(row["y"])*10,pos,row["o"])
+            canvas.create_text(int(row["x"])*10,533-int(row["y"])*10,font=("Purisa",5),fill="white",text=int(row["jerseyNumber"]))
         elif row["team"] == "away": 
             pos = "away"
-            paint_player(canvas,int(row["x"])*10,530-int(row["y"])*10,pos,row["o"])
-            canvas.create_text(int(row["x"])*10,530-int(row["y"])*10,font=("Purisa",5),fill="white",text=int(row["jerseyNumber"]))
+            paint_player(canvas,int(row["x"])*10,533-int(row["y"])*10,pos,row["o"])
+            canvas.create_text(int(row["x"])*10,533-int(row["y"])*10,font=("Purisa",5),fill="white",text=int(row["jerseyNumber"]))
         elif row["displayName"] == "Football":
-            paint_football(canvas,int(row["x"])*10,530-int(row["y"])*10)
+            paint_football(canvas,int(row["x"])*10,533-int(row["y"])*10)
     
     print_lines(canvas)
+    
+    if show_zones:
+        print_zones()
     
 def advance_play():
     canvas.delete("all")
@@ -247,6 +271,16 @@ def next_play():
         
     print_additional_info_console()
     return
+
+def set_firts_frame():
+    global frameId
+    frameId = 1
+    
+    canvas.delete("all")
+    paint_gridiron(canvas)
+    
+    frame = play[play["frameId"]==frameId]
+    print_frame(canvas,frame)
     
 def print_additional_info_console():
     global show_defense
@@ -254,7 +288,6 @@ def print_additional_info_console():
     global show_description
     global show_info
     global show_football
-    global show_zones
     
     if show_offense:
         frame1 = play[play["frameId"]==1]
@@ -262,7 +295,7 @@ def print_additional_info_console():
         qb_team = frame1[frame1["position"]=='QB']["team"].values[0]
         for index,row in frame1.iterrows():
             if row["team"] == qb_team and row["displayName"]!="Football":
-                print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
+                print("{} {} {} ({},{})".format(row["displayName"],row["jerseyNumber"],row["position"],row["x"],row["y"]))
         print()
     
     if show_defense:
@@ -271,7 +304,7 @@ def print_additional_info_console():
         qb_team = frame1[frame1["position"]=='QB']["team"].values[0]
         for index,row in frame1.iterrows():
             if row["team"] != qb_team and row["displayName"]!="Football":
-                print("{} {} {}".format(row["displayName"],row["jerseyNumber"],row["position"]))
+                print("{} {} {} ({},{})".format(row["displayName"],row["jerseyNumber"],row["position"],row["x"],row["y"]))
         print()
     
     if show_description:
@@ -297,37 +330,46 @@ def print_additional_info_console():
         print("X: "+str(football["x"].values[0]))
         print("Y: "+str(football["y"].values[0]))
         
-    if show_zones:
         
-        los = play_info["absoluteYardlineNumber"].values[0]
-        los = los * 10
-        playDirection = play["playDirection"].values[0]
-        if playDirection == "right":
-            deepzone = los + 150
-            #print deep zone
-            create_rectangle(int(deepzone), 0, int(deepzone)+200, 530, fill='yellow', alpha=.5)
-            #print hook zone
-            create_rectangle(int(los), 216,int(deepzone) , 317, fill='green', alpha=.5)
-            #print curl zone
-            create_rectangle(int(los), 120, int(deepzone), 216, fill='blue', alpha=.5)
-            create_rectangle(int(los), 317, int(deepzone), 413, fill='blue', alpha=.5)
-            #print flat zone
-            create_rectangle(int(los), 0, int(deepzone), 120, fill='red', alpha=.5)
-            create_rectangle(int(los), 413, int(deepzone), 533, fill='red', alpha=.5)
-        elif playDirection == "left":
-            deepzone = los - 150
-            #print deep zone
-            create_rectangle(int(deepzone)-200, 0, int(deepzone), 530, fill='yellow', alpha=.5)
-            #print hook zone
-            create_rectangle(int(deepzone), 216, int(los), 317, fill='green', alpha=.5)
-            #print curl zone
-            create_rectangle(int(deepzone), 120, int(los), 216, fill='blue', alpha=.5)
-            create_rectangle(int(deepzone), 317, int(los), 413, fill='blue', alpha=.5)
-            #print flat zone
-            create_rectangle(int(deepzone), 0, int(los), 120, fill='red', alpha=.5)
-            create_rectangle(int(deepzone), 413, int(los), 533, fill='red', alpha=.5)
         
-        #los = plays_no_rz[plays_no_rz["id"]==id]["absoluteYardlineNumber"].values[0]
+def print_zones():
+    los = play_info["absoluteYardlineNumber"].values[0]
+    los = los * 10
+    playDirection = play["playDirection"].values[0]
+    yFootball = play[(play["frameId"]==1)&(play["displayName"]=="Football")]["y"].values[0]
+    yFootball = yFootball * 10
+    if playDirection == "right":
+        #print defensiveline zone
+        create_rectangle(int(los), 533 - int(yFootball) - 70, int(los)+15,533 - int(yFootball) + 70, fill='black', alpha=.8)
+        deepzone = los + 150
+        #print deep zone
+        create_rectangle(int(deepzone), 0, int(deepzone)+200, 533, fill='yellow', alpha=.3)
+        #print hook zone
+        create_rectangle(int(los), 216,int(deepzone) , 317, fill='green', alpha=.3)
+        #print curl zone
+        create_rectangle(int(los), 120, int(deepzone), 216, fill='blue', alpha=.3)
+        create_rectangle(int(los), 317, int(deepzone), 413, fill='blue', alpha=.3)
+        #print flat zone
+        create_rectangle(int(los), 0, int(deepzone), 120, fill='red', alpha=.3)
+        create_rectangle(int(los), 413, int(deepzone), 533, fill='red', alpha=.3)
+    elif playDirection == "left":
+        deepzone = los - 150
+        #print defensiveline zone
+        create_rectangle(int(los) - 15, 533 - int(yFootball) - 70, int(los),533- int(yFootball) + 70, fill='black', alpha=.8)
+        #print deep zone
+        create_rectangle(int(deepzone)-200, 0, int(deepzone), 533, fill='yellow', alpha=.3)
+        #print hook zone
+        create_rectangle(int(deepzone),216 , int(los), 317, fill='green', alpha=.3)
+        #print curl zone
+        
+        
+        create_rectangle(int(deepzone), 120, int(los), 216, fill='blue', alpha=.3)
+        create_rectangle(int(deepzone), 317, int(los), 413, fill='blue', alpha=.3)
+        #print flat zone
+        create_rectangle(int(deepzone), 0, int(los), 120, fill='red', alpha=.3)
+        create_rectangle(int(deepzone), 413, int(los), 533, fill='red', alpha=.3)
+    
+    #los = plays_no_rz[plays_no_rz["id"]==id]["absoluteYardlineNumber"].values[0]
         
 ####################################
 
@@ -407,6 +449,10 @@ back_button.place(x=0,y=540)
 
 advance_button = Button(ventana,text="Advance",command=advance_play)
 advance_button.place(x=70,y=540)
+
+
+first_button = Button(ventana,text="First frame",command=set_firts_frame)
+first_button.place(x=160,y=540)
 
 previous_play_button = Button(ventana,text="Previous play",command=previous_play)
 previous_play_button.place(x=0,y=580)
