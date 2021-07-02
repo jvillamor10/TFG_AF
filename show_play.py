@@ -179,6 +179,7 @@ def advance_play():
     frameId+=1
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
+    labelframe["text"] = frameId
     return
 
 
@@ -189,6 +190,7 @@ def back_play():
     frameId-=1
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
+    labelframe["text"] = frameId
     return
 
 
@@ -229,6 +231,7 @@ def previous_play():
         print("Jugada con PENALTY")
     
     print_additional_info_console()
+    labelframe["text"] = frameId
     return
     
 def next_play():
@@ -270,6 +273,7 @@ def next_play():
         print("Jugada con PENALTY")
         
     print_additional_info_console()
+    labelframe["text"] = frameId
     return
 
 def set_firts_frame():
@@ -281,6 +285,20 @@ def set_firts_frame():
     
     frame = play[play["frameId"]==frameId]
     print_frame(canvas,frame)
+    labelframe["text"] = frameId
+    
+def set_frame():
+    global frameId
+    frameId = inputtxt.get("1.0",END)
+    frameId = int(frameId)
+    
+    canvas.delete("all")
+    paint_gridiron(canvas)
+    
+    frame = play[play["frameId"]==frameId]
+    print_frame(canvas,frame)
+    inputtxt.delete("1.0",END)
+    labelframe["text"] = frameId
     
 def print_additional_info_console():
     global show_defense
@@ -454,6 +472,12 @@ advance_button.place(x=70,y=540)
 first_button = Button(ventana,text="First frame",command=set_firts_frame)
 first_button.place(x=160,y=540)
 
+inputtxt = Text(ventana,height=2,width=10)
+inputtxt.place(x=280,y=540)
+
+newframe_button = Button(ventana,text="New frame",command=set_frame)
+newframe_button.place(x=360,y=540)
+
 previous_play_button = Button(ventana,text="Previous play",command=previous_play)
 previous_play_button.place(x=0,y=580)
 previous_play_button["state"] = DISABLED
@@ -462,6 +486,9 @@ next_play_button = Button(ventana,text="Next play", command=next_play)
 next_play_button.place(x=140,y=580)
 if number_plays == 1:
     next_play_button["state"] = DISABLED
+    
+labelframe = Label(ventana,text=str(frameId))
+labelframe.place(x=260,y=580)
 
 canvas.pack(expand=YES, fill=BOTH)
 #canvas.bind('<Button-1>',clean_play)
