@@ -7,6 +7,9 @@ import time
 import math
 import sys
 import pickle
+from PIL import ImageGrab
+import io
+
 
 # show_play.py play (only one argument)
 
@@ -21,6 +24,17 @@ ventana.title("GridIron")
 canvas = Canvas(width=1200,height=533,bg="green")
 
 images = []
+
+
+
+def getter(widget):
+    x=ventana.winfo_rootx()+widget.winfo_x()
+    y=ventana.winfo_rooty()+widget.winfo_y()
+    x1=x+widget.winfo_width()
+    y1=y+widget.winfo_height()-107
+    ImageGrab.grab().crop((x,y,x1,y1)).save("static_images/{}.png".format(sys.argv[1]))
+
+
 
 def create_rectangle(x1, y1, x2, y2, **kwargs):
     if 'alpha' in kwargs:
@@ -56,9 +70,10 @@ def create_polygon(*args, **kwargs):
 """       Functions            """
 
 def paint_gridiron(canvas):
+    canvas.create_rectangle(0,0,1200,533,fill="green")
     canvas.create_rectangle(0,0,99,533,fill="blue")
     canvas.create_rectangle(1101,0,1200,533,fill="red")
-
+    
 
     for i in range(100,1150,50):
         if i == 600:
@@ -501,9 +516,27 @@ first_frame = play[play["frameId"]==1]
 
 print_frame(canvas,first_frame)
 
+#cap = tkcap.CAP(ventana)
+#cap.capture("hola")
+#ventana.after(3000,getter,canvas)
+
+#canvas.update()
+#canvas.configure(bg="green")
+#paint_gridiron(canvas)
+#canvas
+#canvas.update()
+
+#ps = canvas.postscript(colormode = 'color',file="hola.eps")
+#img = Image.open("hola"+".eps")
+#img.save("hola"+".png", "png",quality=99)
+#im.save("hola" + '.png')
+
+#ps = canvas.postscript(colormode='color')
+#img = Image.open(io.BytesIO(ps.encode('utf-8')))
+#img.save('filename.jpg', 'jpeg')
+
 
 ventana.mainloop()
-
 
 
 
