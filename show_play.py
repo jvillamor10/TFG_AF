@@ -337,7 +337,7 @@ def print_additional_info_console():
         qb_team = frame1[frame1["position"]=='QB']["team"].values[0]
         for index,row in frame1.iterrows():
             if row["team"] != qb_team and row["displayName"]!="Football":
-                print("{} {} {} ({},{})".format(row["displayName"],row["jerseyNumber"],row["position"],row["x"],row["y"]))
+                print("({}) {} {} {} ({},{})".format(row["nflId"],row["displayName"],row["jerseyNumber"],row["position"],row["x"],row["y"]))
         print()
     
     if show_description:
