@@ -5,9 +5,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from sklearn.decomposition import PCA
+
 #visualización de la imagen
 from tkinter import *
 from PIL import Image, ImageTk,ImageDraw
+
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -171,3 +174,68 @@ if option in ["defenseArea","defenseAreaCoverDefenders","width","height","differ
     #st.write("hola")
 
 st.header("Clustering")
+clusters = ["K-means - StandardScaler - K = 3","K-means - MinMaxScaler - K = 7","K-means - RobustScaler - K = 3","K-means - PowerTransformer - K = 6","Jerárquico - StandardScaler - K = 5","Jerárquico - MinMaxScaler - K = 5","Jerárquico - RobustScaler - K = 5","Jerárquico - PowerTransformer - K = 5"]
+cluster = st.radio("Escoge el clustering",clusters)
+
+dict_clusters = {"K-means - StandardScaler - K = 3":"../unsupervised_datasets/kmeans/static_defenses_ss_kmeans_without_outliers.csv",
+                 "K-means - MinMaxScaler - K = 7":"../unsupervised_datasets/kmeans/static_defenses_mms_kmeans_without_outliers.csv",
+                 "K-means - RobustScaler - K = 3":"../unsupervised_datasets/kmeans/static_defenses_rs_kmeans_without_outliers.csv",
+                 "K-means - PowerTransformer - K = 6":"../unsupervised_datasets/kmeans/static_defenses_pt_h_without_outliers.csv",
+                 "Jerárquico - StandardScaler - K = 5":"../unsupervised_datasets/hierarchical_k_130/static_defenses_ss_hierarchical_without_outliers.csv",
+                 "Jerárquico - MinMaxScaler - K = 5":"../unsupervised_datasets/hierarchical_k_130/static_defenses_mms_hierarchical_without_outliers.csv",
+                 "Jerárquico - RobustScaler - K = 5":"../unsupervised_datasets/hierarchical_k_130/static_defenses_rs_hierarchical_without_outliers.csv",
+                 "Jerárquico - PowerTransformer - K = 5":"../unsupervised_datasets/hierarchical_k_130/static_defenses_pt_hierarchical_without_outliers.csv"
+                 }
+
+selected_cluster = pd.read_csv(dict_clusters[cluster],index_col=0)
+
+number_clusters = selected_cluster["cluster"].unique()
+
+number_clusters.sort()
+st.markdown("Distribución de los clusters")
+elements_clusters = ""
+for c in number_clusters:
+    elements_clusters += "__Númer de elementos Cluster{}__: ".format(str(c))+str(len(selected_cluster[selected_cluster["cluster"]==c]))+"  \n"
+    #st.markdown("__Númer de elementos Cluster{}__: ".format(str(c))+str(len(selected_cluster[selected_cluster["cluster"]==c])))
+
+st.markdown(elements_clusters)
+
+option_cluster = st.selectbox("Escoge un cluster para poder visualizarla en profundidad",number_clusters)
+
+st.markdown("Media de las variables")
+st.markdown("__defensivelinezonePlayers__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["defensivelinezonePlayers"].mean())
+            +"  \n__deepzonePlayers__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["deepzonePlayers"].mean())
+            +"  \n__hookzonePlayers__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["hookzonePlayers"].mean())
+            +"  \n__curlzonePlayers__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["curlzonePlayers"].mean())
+            +"  \n__flatzonePlayers__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["flatzonePlayers"].mean())
+            +"  \n__defenseArea__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["defenseArea"].mean())
+            +"  \n__defenseAreaCoverDefenders__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["defenseAreaCoverDefenders"].mean())
+            +"  \n__width__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["width"].mean())
+            +"  \n__height__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["height"].mean())
+            +"  \n__numberQBs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberQBs"].mean())
+            +"  \n__numberWRs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberWRs"].mean())
+            +"  \n__numberRBs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberRBs"].mean())
+            +"  \n__numberTEs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberTEs"].mean())
+            +"  \n__numberFBs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberFBs"].mean())
+            +"  \n__numberOffensivePlayersAnotherPosition__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberOffensivePlayersAnotherPosition"].mean())
+            +"  \n__numberSafeties__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberSafeties"].mean())
+            +"  \n__numberLBs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberLBs"].mean())
+            +"  \n__numberCBs__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberCBs"].mean())
+            +"  \n__strongSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["strongSide"].mean())
+            +"  \n__numberPlayersDefenseStrongSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberPlayersDefenseStrongSide"].mean())
+            +"  \n__numberPlayersDefenseWeakSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberPlayersDefenseWeakSide"].mean())
+            +"  \n__numberPlayersOffenseStrongSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberPlayersOffenseStrongSide"].mean())
+            +"  \n__numberPlayersOffenseWeakSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["numberPlayersOffenseWeakSide"].mean())
+            +"  \n__differenceOffenseVsDefenseWidth__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["differenceOffenseVsDefenseWidth"].mean())
+            +"  \n__differenceOffenseVsDefenseStrongSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["differenceOffenseVsDefenseStrongSide"].mean())
+            +"  \n__differenceOffenseVsDefenseWeakSide__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["differenceOffenseVsDefenseWeakSide"].mean())
+            +"  \n__HeightByWeightDeep__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["HeightByWeightDeep"].mean())
+            +"  \n__HeightByWeightHook__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["HeightByWeightHook"].mean())
+            +"  \n__HeightByWeightCurl__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["HeightByWeightCurl"].mean())
+            +"  \n__HeightByWeightFlat__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["HeightByWeightFlat"].mean())
+            +"  \n__WeightByArea__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["WeightByArea"].mean())
+            +"  \n__density__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["density"].mean())
+            +"  \n__densityNoLine__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["densityNoLine"].mean())
+            +"  \n__densityInsidePoints__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["densityInsidePoints"].mean())
+            +"  \n__densityInsidePointsNoLine__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["densityInsidePointsNoLine"].mean())
+            )
