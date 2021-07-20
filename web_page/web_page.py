@@ -6,15 +6,19 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn import tree
 
 #visualización de la imagen
 from tkinter import *
 from PIL import Image, ImageTk,ImageDraw
 
+from datetime import datetime
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
-st.title("Cuadro de comandos")
+st.title("Cuadro de mandos")
 
 st.write("Aquí se puede visualizar el dataset transformado")
 
@@ -239,3 +243,94 @@ st.markdown("__defensivelinezonePlayers__: "+str(selected_cluster[selected_clust
             +"  \n__densityInsidePoints__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["densityInsidePoints"].mean())
             +"  \n__densityInsidePointsNoLine__: "+str(selected_cluster[selected_cluster["cluster"]==option_cluster]["densityInsidePointsNoLine"].mean())
             )
+
+
+st.header("Evaluación de los jugadores")
+
+players = pd.read_csv("../processed_data/clean/players.csv",index_col = 0)
+summary = pd.read_csv("../notebooks_valorations/summary.csv",index_col=0)
+summary_cp = summary.copy()
+
+def changeGameClock(value,quarter):
+    if quarter == 1:
+        total_time = 3600
+    elif quarter == 2:
+        total_time = 2700
+    elif quarter == 3:
+        total_time = 1800
+    elif quarter == 4:
+        total_time = 900
+    
+    format = "%M:%S:%f"
+    actual_time = datetime.strptime(value, format) - datetime.strptime("00:00:00",format)
+    time = total_time - (900 - actual_time.total_seconds())
+    return time
+
+
+summary_cp["gameClock"] = summary_cp.apply(lambda x: changeGameClock(x["gameClock"],x["quarter"]),axis=1)
+summary_cp.drop(["playerId","playId"],axis=1,inplace=True)
+
+
+X_train, X_test, y_train, y_test = train_test_split(summary_cp.drop(["defenseValoration"],axis=1),summary_cp["defenseValoration"],test_size=0.3)
+
+
+regressor = tree.DecisionTreeClassifier(criterion='entropy', min_samples_split = 65, 
+                                  min_samples_leaf = 20, max_depth = 10, 
+                                  class_weight={0:5.5,1:4.4})
+regressor.fit( X = X_train, y = y_train)
+y_pred = regressor.predict(X = X_test)
+acc = accuracy_score(y_test, y_pred)
+#print ('Acc', acc)
+
+
+
+predict_proba = regressor.predict_proba(summary_cp.drop(["defenseValoration"],axis=1))[:,1]
+
+summary["predict_proba"] = predict_proba - (1 - predict_proba)
+predict_proba_sums = summary.groupby("playerId")["predict_proba"].sum()
+
+valoration_players = {}
+for player in predict_proba_sums.index:
+    valoration_players[player] = predict_proba_sums[player]
+    
+valorations = dict(sorted(valoration_players.items(), key=lambda item: item[1],reverse=True))
+
+
+st.subheader("Top 25 defensores")
+
+
+    
+positions = ["Todas las posiciones", "Linebackers","Cornerbacks","Safeties"]
+position = st.selectbox("Escoge una posición para ver el ranking según posiciones",positions)
+
+if position == "Cornerbacks":
+    cont = 0
+    for val in valorations:
+        if players.loc[val]["position"] in ["CB","DB"]:
+            cont +=1
+            st.markdown(str(cont)+".- ("+str(val)+") __"+players.loc[val]["displayName"]+"__: "+str(round(valorations[val],2)))
+            if cont == 25:
+                break
+elif position == "Todas las posiciones":
+    cont = 0
+    for val in valorations:
+        cont +=1
+        st.markdown(str(cont)+".-("+str(val)+") __"+players.loc[val]["displayName"]+"__: "+str(round(valorations[val],2))+" _"+players.loc[val]["position"]+"_")
+        if cont == 25:
+            break
+elif position == "Linebackers":
+    cont = 0
+    for val in valorations:
+        if players.loc[val]["position"] in ["LB","ILB","OLB","MLB"]:
+            cont +=1
+            st.markdown(str(cont)+".- ("+str(val)+") __"+players.loc[val]["displayName"]+"__: "+str(round(valorations[val],2))+" _"+players.loc[val]["position"]+"_")
+            if cont == 25:
+                break
+elif position == "Safeties":
+    cont = 0
+    for val in valorations:
+        if players.loc[val]["position"] in ["S","SS","FS"]:
+            cont +=1
+            st.markdown(str(cont)+".- ("+str(val)+") __"+players.loc[val]["displayName"]+"__: "+str(round(valorations[val],2))+" _"+players.loc[val]["position"]+"_")
+            if cont == 25:
+                break
