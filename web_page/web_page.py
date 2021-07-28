@@ -4,11 +4,16 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+import pickle
 
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn import tree
+from sklearn import preprocessing
+from sklearn.decomposition import PCA
 
 #visualización de la imagen
 from tkinter import *
@@ -91,6 +96,63 @@ def obtainDefenseTeam(playId):
 df
 st.markdown("Este conjunto de datos cuenta con "+str(len(df))+" registros y "+str(len(df.columns))+" columnas.")
 
+with st.beta_expander("Datos normalizados"):
+    static_defenses = df.copy()
+    static_defenses.replace({"right":0,"left":1},inplace=True)
+    
+    scaler = preprocessing.StandardScaler()
+    static_defenses1 = scaler.fit_transform(static_defenses)
+    
+    scaler = preprocessing.MinMaxScaler()
+    static_defenses2 = scaler.fit_transform(static_defenses)
+    
+    scaler = preprocessing.RobustScaler()
+    static_defenses3 = scaler.fit_transform(static_defenses)
+    
+    scaler = preprocessing.PowerTransformer()
+    static_defenses4 = scaler.fit_transform(static_defenses)
+    
+    sns.kdeplot(data=static_defenses.stack(), shade=True).set_title('Datos originales')
+    plt.show()
+    st.pyplot()
+    
+    standarscalerDF = pd.DataFrame(static_defenses1,columns=static_defenses.columns)
+    sns.kdeplot(data=standarscalerDF.stack(), shade=True).set_title('Datos normalizados con StandardScaler')
+    plt.show()
+    st.pyplot()
+    
+    minmaxscalerDF = pd.DataFrame(static_defenses2,columns=static_defenses.columns)
+    sns.kdeplot(data=minmaxscalerDF.stack(), shade=True).set_title('Datos normalizados con MinMaxScaler')
+    plt.show()
+    st.pyplot()
+    
+    robustscalerDF = pd.DataFrame(static_defenses3,columns=static_defenses.columns)
+    sns.kdeplot(data=robustscalerDF.stack(), shade=True).set_title('Datos normalizados con RobustScaler')
+    plt.show()
+    st.pyplot()
+    
+    powertransformerDF = pd.DataFrame(static_defenses4,columns=static_defenses.columns)
+    sns.kdeplot(data=powertransformerDF.stack(), shade=True).set_title('Datos normalizados con PowerTransformer')
+    plt.show()
+    st.pyplot()
+    
+with st.beta_expander("Conjuntos de datos tras aplicar el PCA"):
+    X_pca_ss = PCA(n_components = 14).fit_transform(static_defenses1)
+    st.header("Dataset normalizado con el método StandardScaler")
+    X_pca_ss
+    
+    st.header("Dataset normalizado con el método MinMaxScaler")
+    X_pca_mms = PCA(n_components = 8).fit_transform(static_defenses2)
+    X_pca_mms
+    
+    st.header("Dataset normalizado con el método RobustScaler")
+    X_pca_rs = PCA(n_components = 5).fit_transform(static_defenses3)
+    X_pca_rs
+    
+    st.header("Dataset normalizado con el método PowerTransformer")
+    X_pca_pt = PCA(n_components = 13).fit_transform(static_defenses4)
+    X_pca_pt
+    
 #Diccionario para los equipos
 dict_teams = {"PHI":"Philadelphia Eagles","ATL":"Atlanta Falcons","CLE":"Cleveland Browns",
               "PIT":"Pittsburgh Steelers","IND":"Indianapolis Colts","CIN":"Cincinnati Bengals",
@@ -288,8 +350,14 @@ if option in ["defenseArea","defenseAreaCoverDefenders","width","height","differ
     df[option].plot.box()
     plt.show()
     st.pyplot()
-#if st.checkbox('Show raw data'):
-    #st.write("hola")
+
+
+opciones_variables = st.multiselect("Escoge una opción",df.columns)
+if st.button("Calcular gráfica de las variables"):
+    df.plot.scatter(x=opciones_variables[0],y=opciones_variables[1])
+    plt.show()
+    st.pyplot()
+st.write("La primera variable se representará en el eje X y la segunda en el eje Y.")
 
 st.header("Clustering")
 clusters = ["K-means - StandardScaler - K = 3","K-means - MinMaxScaler - K = 7","K-means - RobustScaler - K = 3","K-means - PowerTransformer - K = 6","Jerárquico - StandardScaler - K = 5","Jerárquico - MinMaxScaler - K = 5","Jerárquico - RobustScaler - K = 5","Jerárquico - PowerTransformer - K = 5"]
@@ -306,6 +374,65 @@ dict_clusters = {"K-means - StandardScaler - K = 3":"../unsupervised_datasets/km
                  }
 
 selected_cluster = pd.read_csv(dict_clusters[cluster],index_col=0)
+
+dict_cluster_model = {"K-means - StandardScaler - K = 3":'../resources/static_defenses_clusters/kmeans_models/km_ss.pickle',
+                 "K-means - MinMaxScaler - K = 7":'../resources/static_defenses_clusters/kmeans_models/km_mms.pickle',
+                 "K-means - RobustScaler - K = 3":'../resources/static_defenses_clusters/kmeans_models/km_rs.pickle',
+                 "K-means - PowerTransformer - K = 6":'../resources/static_defenses_clusters/kmeans_models/km_pt.pickle',
+                 "Jerárquico - StandardScaler - K = 5":'../resources/static_defenses_clusters/hierarchical_models/km_ss_h.pickle',
+                 "Jerárquico - MinMaxScaler - K = 5":'../resources/static_defenses_clusters/hierarchical_models/km_mms_h.pickle',
+                 "Jerárquico - RobustScaler - K = 5":'../resources/static_defenses_clusters/hierarchical_models/km_rs_h.pickle',
+                 "Jerárquico - PowerTransformer - K = 5":'../resources/static_defenses_clusters/hierarchical_models/km_pt_h.pickle'
+                 }
+
+dict_cluster_labels = {"K-means - StandardScaler - K = 3":'',
+                 "K-means - MinMaxScaler - K = 7":'',
+                 "K-means - RobustScaler - K = 3":'',
+                 "K-means - PowerTransformer - K = 6":'',
+                 "Jerárquico - StandardScaler - K = 5":'../resources/static_defenses_clusters/hierarchical_models/labels_ss.pickle',
+                 "Jerárquico - MinMaxScaler - K = 5":'../resources/static_defenses_clusters/hierarchical_models/labels_mms.pickle',
+                 "Jerárquico - RobustScaler - K = 5":'../resources/static_defenses_clusters/hierarchical_models/labels_rs.pickle',
+                 "Jerárquico - PowerTransformer - K = 5":'../resources/static_defenses_clusters/hierarchical_models/labels_pt.pickle'
+                 }
+
+dict_cluster_coords = {"K-means - StandardScaler - K = 3":[1,1,1,1],
+                 "K-means - MinMaxScaler - K = 7":'',
+                 "K-means - RobustScaler - K = 3":'',
+                 "K-means - PowerTransformer - K = 6":'',
+                 "Jerárquico - StandardScaler - K = 5":[-15, 20,-5,10],
+                 "Jerárquico - MinMaxScaler - K = 5":[-1,1.5,-1,1],
+                 "Jerárquico - RobustScaler - K = 5":[-5,15,-5,15],
+                 "Jerárquico - PowerTransformer - K = 5":[-10,10,-5,4]
+                 }
+
+st.subheader("Centroides")
+
+
+if dict_cluster_labels[cluster] != "":
+    pickle_file = open(dict_cluster_model[cluster],'rb')
+    regressor = pickle.load(pickle_file)
+    pickle_file.close()
+    pickle_file = open(dict_cluster_labels[cluster],'rb')
+    labels = pickle.load(pickle_file)
+    pickle_file.close()
+
+
+    colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
+    colors = np.hstack([colors] * 20)
+
+    coords = dict_cluster_coords[cluster]
+
+    fig, ax = plt.subplots()
+    plt.xlim(coords[0], coords[1])
+    plt.ylim(coords[2], coords[3])
+
+    for i in range(len(regressor.cluster_centers_)):
+        plt.text(regressor.cluster_centers_[i][0], regressor.cluster_centers_[i][1], 'x', color=colors[labels[i]])  
+        
+    ax.grid(True)
+    fig.tight_layout()
+    plt.show()
+    st.pyplot()
 
 number_clusters = selected_cluster["cluster"].unique()
 
@@ -376,53 +503,23 @@ st.markdown("__defensivelinezonePlayers__: "+str(round(variables_cluster[0],2))
             )
 
 
+opciones_variables_clustering = st.multiselect("Escoge una opción",selected_cluster.columns)
+if st.button("Calcular gráfica"):
+    selected_cluster[selected_cluster["cluster"]==option_cluster].plot.scatter(x=opciones_variables_clustering[0],y=opciones_variables_clustering[1])
+    plt.show()
+    st.pyplot()
+
+st.write("La primera variable se representará en el eje X y la segunda en el eje Y.")
 st.header("Evaluación de los jugadores")
 
 players = pd.read_csv("../processed_data/clean/players.csv",index_col = 0)
-summary = pd.read_csv("../notebooks_valorations/summary.csv",index_col=0)
-summary_cp = summary.copy()
+players_evaluation = pd.read_csv("../notebooks_valorations/players_evaluation.csv",index_col=0)
 
-def changeGameClock(value,quarter):
-    if quarter == 1:
-        total_time = 3600
-    elif quarter == 2:
-        total_time = 2700
-    elif quarter == 3:
-        total_time = 1800
-    elif quarter == 4:
-        total_time = 900
-    
-    format = "%M:%S:%f"
-    actual_time = datetime.strptime(value, format) - datetime.strptime("00:00:00",format)
-    time = total_time - (900 - actual_time.total_seconds())
-    return time
-
-
-summary_cp["gameClock"] = summary_cp.apply(lambda x: changeGameClock(x["gameClock"],x["quarter"]),axis=1)
-summary_cp.drop(["playerId","playId"],axis=1,inplace=True)
-
-
-X_train, X_test, y_train, y_test = train_test_split(summary_cp.drop(["defenseValoration"],axis=1),summary_cp["defenseValoration"],test_size=0.3)
-
-
-regressor = tree.DecisionTreeClassifier(criterion='entropy', min_samples_split = 65, 
-                                  min_samples_leaf = 20, max_depth = 10, 
-                                  class_weight={0:5.5,1:4.4})
-regressor.fit( X = X_train, y = y_train)
-y_pred = regressor.predict(X = X_test)
-acc = accuracy_score(y_test, y_pred)
-#print ('Acc', acc)
-
-
-
-predict_proba = regressor.predict_proba(summary_cp.drop(["defenseValoration"],axis=1))[:,1]
-
-summary["predict_proba"] = predict_proba - (1 - predict_proba)
-predict_proba_sums = summary.groupby("playerId")["predict_proba"].sum()
+players_evaluation = players_evaluation.sort_values(by=["predict_proba"],ascending=False)
 
 valoration_players = {}
-for player in predict_proba_sums.index:
-    valoration_players[player] = predict_proba_sums[player]
+for player in players_evaluation.index:
+    valoration_players[int(player)] = players_evaluation.loc[int(player)]["predict_proba"]
     
 valorations = dict(sorted(valoration_players.items(), key=lambda item: item[1],reverse=True))
 
@@ -483,3 +580,100 @@ elif position == "Safeties":
                 break
     df.index = np.arange(1, len(df)+1)
     st.table(df)
+    
+    
+st.subheader("Valoraciones de equipos")
+opciones_orden_equipo = ["Descendente","Ascendente"]
+mostrar_equipos = st.radio("¿En qué orden quieres visualizar los datos?",opciones_orden_equipo)
+teams_valorations = pd.read_csv("../notebooks_valorations/teams_evaluations.csv")
+teams_valorations.index = np.arange(1, len(teams_valorations)+1)
+teams_valorations.columns = ["Nombre equipo","Valoración total"]
+
+min_value = round(teams_valorations["Valoración total"].min(),2)
+min_value -=1
+
+max_value = round(teams_valorations["Valoración total"].max(),2)
+max_value += 1
+
+value_teams = st.slider("Escoge el número que quieras visualizar",min_value,max_value,14.0)
+
+#show_teams = pd.DataFrame()
+    #for index,row in teams_valorations.iterrows():
+        #if row["Valoración total"]>value_teams:
+            #new_row = {"Nombre equipo":row["Nombre equipo"],"Valoración"}
+            #df = df.append(new_row,ignore_index=True)
+
+if mostrar_equipos == "Descendente":
+    st.table(teams_valorations[teams_valorations["Valoración total"]>value_teams])
+elif mostrar_equipos == "Ascendente":
+    teams_valorations = teams_valorations.sort_values(by=["Valoración total"],ascending=True)
+    st.table(teams_valorations)
+
+    
+
+
+#st.subheader("Top "+str(number_pairs)+" mejores parejas en defensa clasificado por equipos.")
+st.subheader("Mejores parejas por equipo")
+select_pairs = ["Todos los equipos"]
+for team in dict_teams:
+    select_pairs.append(dict_teams[team])
+
+option_pairs = st.selectbox("Escoge una feature para poder visualizarla en profundidad",select_pairs)
+
+
+
+if option_pairs == "Todos los equipos":
+    number_pairs = 32
+    select_team = False
+else:
+    number_pairs = st.slider("Escoge el número de parejas que quieres visualizar",0,100,5)
+    select_team = True
+    
+pairs = pd.read_csv("../notebooks_valorations/pairs_evaluations.csv")
+df = pd.DataFrame(columns=["Equipo","Identificador Jugador 1","Nombre y apellidos Jugador 1","Posición Jugador 1","Identificador Jugador 2","Nombre y apellidos Jugador 2","Posición Jugador 2","Valoración"])
+cont = 0
+teams = []
+for index,row in pairs.iterrows():
+    
+    players_ids = row["pairs"]
+    
+    players_ids = players_ids[1:len(players_ids)-2]
+    
+    players_split = players_ids.split(",")
+    
+    player1 = int(float(players_split[0]))
+    player2 = int(float(players_split[1]))
+    
+    
+    plays_players = all_plays_static[all_plays_static["nflId"].isin([player1,player2])]
+    team_player = plays_players["team"].values[0]
+    #print(team)
+    
+    partsId = plays_players["id"].values[0].split(":")
+    gamePlayer = int(partsId[0])
+    
+    if team_player == "home":
+        team = games.loc[gamePlayer]["homeTeamAbbr"]
+    elif team_player == "away":
+        team = games.loc[gamePlayer]["visitorTeamAbbr"]
+        
+    if select_team:
+        if dict_teams[team] == option_pairs:
+            cont+=1
+            teams.append(team)
+            new_row = {"Equipo":dict_teams[team],"Identificador Jugador 1":player1,"Nombre y apellidos Jugador 1":players.loc[player1]["displayName"],"Posición Jugador 1":players.loc[player1]["position"],"Identificador Jugador 2":player2,"Nombre y apellidos Jugador 2":players.loc[player2]["displayName"],"Posición Jugador 2":players.loc[player1]["position"],"Valoración":round(row["predict_proba"],2)}
+            df = df.append(new_row,ignore_index=True)
+    else:
+        if team not in teams:
+            cont+=1
+            teams.append(team)
+            new_row = {"Equipo":dict_teams[team],"Identificador Jugador 1":player1,"Nombre y apellidos Jugador 1":players.loc[player1]["displayName"],"Posición Jugador 1":players.loc[player1]["position"],"Identificador Jugador 2":player2,"Nombre y apellidos Jugador 2":players.loc[player2]["displayName"],"Posición Jugador 2":players.loc[player1]["position"],"Valoración":round(row["predict_proba"],2)}
+            df = df.append(new_row,ignore_index=True)
+        
+    if cont == number_pairs:
+        break
+    
+df.index = np.arange(1, len(df)+1)
+st.table(df)
+
+
