@@ -25,6 +25,8 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 st.title("Cuadro de mandos")
 
+st.subheader("Observar el dataset transformado")
+
 st.write("Aquí se puede visualizar el dataset transformado")
 
 #Datasets
@@ -319,25 +321,24 @@ if user_input_id != "":
 st.header("Información de las variables")
         
 option = st.selectbox("Escoge una feature para poder visualizarla en profundidad",df.columns)
-st.subheader("Diagrama de frecuencias de la variable "+option)
+
 
 if option not in ["defenseArea","defenseAreaCoverDefenders","width","height","differenceOffenseVsDefenseWidth","HeightByWeightDeep","HeightByWeightHook","HeightByWeightCurl","HeightByWeightFlat","WeightByArea","density","densityNoLine","densityInsidePoints","densityInsidePointsNoLine"]:
-    #st.bar_chart(df[option].value_counts())
+    st.subheader("Diagrama de frecuencias de la variable "+option)
     df[option].value_counts().plot(kind="bar")
     plt.show()
     st.pyplot()
 
 else:
-    #hist_values = np.histogram(df[option])[0]
-    #st.bar_chart()
+    st.subheader("Histograma de la variable "+option)
     df[option].hist().grid(False)
     plt.show()
     st.pyplot()
 #st.bar_chart(df[option].hist())
 
 
-st.markdown("__Valor mínimo__: "+str(df[option].min())
-            +"  \n__Valor máximo__: "+str(df[option].max())
+st.markdown("__Valor mínimo__: "+str(round(df[option].min(),2))
+            +"  \n__Valor máximo__: "+str(round(df[option].max(),2))
             +"  \n__Valor medio__: "+str(round(df[option].mean(),2))
             +"  \n__Valor primer cuantil__: "+str(round(df[option].quantile(q=0.25),2))
             +"  \n__Valor mediana__: "+str(round(df[option].median(),2))
@@ -352,7 +353,7 @@ if option in ["defenseArea","defenseAreaCoverDefenders","width","height","differ
     st.pyplot()
 
 
-opciones_variables = st.multiselect("Escoge una opción",df.columns)
+opciones_variables = st.multiselect("Escoge dos variables",df.columns)
 if st.button("Calcular gráfica de las variables"):
     df.plot.scatter(x=opciones_variables[0],y=opciones_variables[1])
     plt.show()
@@ -440,7 +441,7 @@ number_clusters.sort()
 st.markdown("Distribución de los clusters")
 elements_clusters = ""
 for c in number_clusters:
-    elements_clusters += "__Númer de elementos Cluster{}__: ".format(str(c))+str(len(selected_cluster[selected_cluster["cluster"]==c]))+"  \n"
+    elements_clusters += "__Número de elementos Cluster{}__: ".format(str(c))+str(len(selected_cluster[selected_cluster["cluster"]==c]))+"  \n"
     #st.markdown("__Númer de elementos Cluster{}__: ".format(str(c))+str(len(selected_cluster[selected_cluster["cluster"]==c])))
 
 st.markdown(elements_clusters)
@@ -503,17 +504,18 @@ st.markdown("__defensivelinezonePlayers__: "+str(round(variables_cluster[0],2))
             )
 
 
-opciones_variables_clustering = st.multiselect("Escoge una opción",selected_cluster.columns)
+opciones_variables_clustering = st.multiselect("Escoge dos variables",selected_cluster.columns)
 if st.button("Calcular gráfica"):
     selected_cluster[selected_cluster["cluster"]==option_cluster].plot.scatter(x=opciones_variables_clustering[0],y=opciones_variables_clustering[1])
     plt.show()
     st.pyplot()
 
 st.write("La primera variable se representará en el eje X y la segunda en el eje Y.")
-st.header("Evaluación de los jugadores")
+st.header("Evaluaciones obtenidas")
+st.subheader("Evaluación de los jugadores")
 
 players = pd.read_csv("../processed_data/clean/players.csv",index_col = 0)
-players_evaluation = pd.read_csv("../notebooks_valorations/players_evaluation.csv",index_col=0)
+players_evaluation = pd.read_csv("../notebooks_valorations/evaluations_obtained/players_evaluation.csv",index_col=0)
 
 players_evaluation = players_evaluation.sort_values(by=["predict_proba"],ascending=False)
 
@@ -585,7 +587,7 @@ elif position == "Safeties":
 st.subheader("Valoraciones de equipos")
 opciones_orden_equipo = ["Descendente","Ascendente"]
 mostrar_equipos = st.radio("¿En qué orden quieres visualizar los datos?",opciones_orden_equipo)
-teams_valorations = pd.read_csv("../notebooks_valorations/teams_evaluations.csv")
+teams_valorations = pd.read_csv("../notebooks_valorations/evaluations_obtained/teams_evaluations.csv")
 teams_valorations.index = np.arange(1, len(teams_valorations)+1)
 teams_valorations.columns = ["Nombre equipo","Valoración total"]
 
@@ -629,7 +631,7 @@ else:
     number_pairs = st.slider("Escoge el número de parejas que quieres visualizar",0,100,5)
     select_team = True
     
-pairs = pd.read_csv("../notebooks_valorations/pairs_evaluations.csv")
+pairs = pd.read_csv("../notebooks_valorations/evaluations_obtained/pairs_evaluations.csv")
 df = pd.DataFrame(columns=["Equipo","Identificador Jugador 1","Nombre y apellidos Jugador 1","Posición Jugador 1","Identificador Jugador 2","Nombre y apellidos Jugador 2","Posición Jugador 2","Valoración"])
 cont = 0
 teams = []
